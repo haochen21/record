@@ -22,9 +22,6 @@ public class Mo {
     @PrimaryKey
     private MoKey moKey;
 
-    @Column("mo_path")
-    private String moPath;
-
     @Column("tags")
     @Indexed("mo_tags_idx")
     private Map<String, String> tags = new HashMap<>();

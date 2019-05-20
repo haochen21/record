@@ -52,7 +52,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 "  category text,\n" +
                 "  mo_path text,\n" +
                 "  tags map<text, text>,\n" +
-                "  PRIMARY KEY (metric,category)\n" +
+                "  PRIMARY KEY ((metric,category),mo_path)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 1800000\n" +

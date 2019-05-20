@@ -1,10 +1,10 @@
 package com.betasoft.record.service;
 
 import com.betasoft.record.builder.Metric;
-import com.betasoft.record.model.DataPointWithTtl;
+import com.betasoft.record.model.DataPoint;
 import reactor.core.publisher.Flux;
 
 public interface MetricService {
 
-    Flux<DataPointWithTtl> saveMetrics(Flux<Metric> metricFlux);
+    Flux<DataPoint> saveMetrics(Flux<Metric> metricFlux);
 }

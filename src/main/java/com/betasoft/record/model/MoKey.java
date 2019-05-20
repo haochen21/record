@@ -1,6 +1,7 @@
 package com.betasoft.record.model;
 
 import lombok.*;
+import org.springframework.data.cassandra.core.cql.Ordering;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyClass;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
@@ -20,4 +21,7 @@ public class MoKey implements Serializable {
 
     @PrimaryKeyColumn(name = "category", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private String category;
+
+    @PrimaryKeyColumn(name = "mo_path", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+    private String moPath;
 }

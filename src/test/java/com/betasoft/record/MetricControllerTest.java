@@ -1,30 +1,24 @@
 package com.betasoft.record;
 
 import com.betasoft.record.builder.Metric;
-import com.betasoft.record.service.MetricService;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 
 import java.util.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
-public class RecordApplicationTests {
+@SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class MetricControllerTest {
 
     @Autowired
-    MetricService metricService;
+    private WebTestClient webTestClient;
 
-    @Test
-    public void contextLoads() {
-    }
-
-    @Test
-    public void saveTest() throws Exception {
+    public void testSaveMetrics(){
         List<Metric> metrics = new ArrayList<>();
         metrics.add(createMetric("OSCPU_CPU_LOAD","host","Windows","10001"));
         metrics.add(createMetric("OSCPU_CPU_LOAD","host","NetworkDevice","10002"));
@@ -33,15 +27,14 @@ public class RecordApplicationTests {
         metrics.add(createMetric("CPU_LOAD","host","Windows","10001"));
         metrics.add(createMetric("CPU_LOAD","host","NetworkDevice","10002"));
 
-        Flux<Metric> metricFlux = Flux.fromIterable(metrics);
-        metricService.saveMetrics(metricFlux)
-                .log()
-                .subscribe();
-
-        Thread.sleep(10*1000);
+        webTestClient.post()
+                .uri("/api/v1/datapoints")
+                .body(Flux.fromIterable(metrics),Metric.class)
+                .accept(MediaType.APPLICATION_JSON).exchange()
+                .expectStatus().isOk();
     }
 
-    private Metric createMetric(String metricName, String category, String moType,String moId){
+    private Metric createMetric(String metricName, String category, String moType, String moId){
         Random random = new Random();
         Calendar nowCalendar = Calendar.getInstance();
 
