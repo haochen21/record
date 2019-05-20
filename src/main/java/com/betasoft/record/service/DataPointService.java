@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface DataPointService {
 
-    Mono<Queries> query(QueryBuilder queryBuilder);
+    Mono<Queries> query(Mono<QueryBuilder> queryBuilder);
 
     Mono<Queries> find(String metric, String moc, List<String> mos, Date beginDate, Date endDate);
 

@@ -81,7 +81,7 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         StringBuilder findSql = new StringBuilder();
         findSql.append("SELECT * FROM data_point where metric ='").append(metric).append("' ");
-        findSql.append("and moc = '").append(moc).append("' ");
+        findSql.append("and day = '").append("2019-05-20").append("' ");
         findSql.append("and mo").append(moCondition).append(" ");
         findSql.append("and event_time >='").append(sdf.format(beginDate)).append("' ");
         findSql.append("and event_time <='").append(sdf.format(endDate)).append("'");

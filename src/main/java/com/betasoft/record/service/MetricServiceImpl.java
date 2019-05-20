@@ -1,7 +1,6 @@
 package com.betasoft.record.service;
 
 import com.betasoft.record.builder.Metric;
-import com.betasoft.record.builder.SamplePoint;
 import com.betasoft.record.model.*;
 import com.betasoft.record.repository.DataPointRepository;
 import com.betasoft.record.repository.MoRepository;
@@ -71,9 +70,7 @@ public class MetricServiceImpl implements MetricService {
         });
 
         return filterMetricFlux
-                .log()
                 .flatMap(metric -> saveMo(metric).map(metric1 -> metric1))
-                .log()
                 .flatMap(this::getDataPoint)
                 .flatMap(dataPointWrapper ->
                         dataPointRepository.insert(dataPointWrapper.getDataPoint(), dataPointWrapper.getTtl()))

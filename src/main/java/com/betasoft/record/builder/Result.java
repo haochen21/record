@@ -1,10 +1,14 @@
 package com.betasoft.record.builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
 
+@Getter
+@Setter
 public class Result {
 
     private String name;
