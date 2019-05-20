@@ -50,7 +50,7 @@ public class MetricServiceImpl implements MetricService {
     }
 
     @Override
-    public Flux<DataPoint> saveMetrics(Flux<Metric> metricFlux) {
+    public Mono<Long> saveMetrics(Flux<Metric> metricFlux) {
         Flux<Metric> filterMetricFlux = metricFlux.filter(metric -> {
             if (metric.getTags() == null || metric.getTags().size() == 0) {
                 return false;
@@ -71,10 +71,13 @@ public class MetricServiceImpl implements MetricService {
         });
 
         return filterMetricFlux
+                .log()
                 .flatMap(metric -> saveMo(metric).map(metric1 -> metric1))
+                .log()
                 .flatMap(this::getDataPoint)
                 .flatMap(dataPointWrapper ->
-                        dataPointRepository.insert(dataPointWrapper.getDataPoint(), dataPointWrapper.getTtl()));
+                        dataPointRepository.insert(dataPointWrapper.getDataPoint(), dataPointWrapper.getTtl()))
+                .count();
 
     }
 

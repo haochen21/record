@@ -1,6 +1,7 @@
 package com.betasoft.record.web;
 
 import com.betasoft.record.builder.Metric;
+import com.betasoft.record.model.DataPoint;
 import com.betasoft.record.service.MetricService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class MetricHandler {
 
     public Mono<ServerResponse> save(ServerRequest serverRequest) {
         Flux<Metric> metricSaved = serverRequest.bodyToFlux(Metric.class);
-        metricService.saveMetrics(metricSaved);
-        return ServerResponse.status(HttpStatus.OK).body(Mono.empty(),Void.class);
+        Mono<Long> dataPointNum = metricService.saveMetrics(metricSaved);
+        return ServerResponse.status(HttpStatus.OK).body(dataPointNum,Long.class);
     }
 }
