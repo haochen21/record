@@ -31,12 +31,13 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
         String dataPointTable = "" +
                 "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".data_point (\n" +
                 "  metric text,\n" +
-                "  mo text,\n" +
+                "  mo_type text,\n" +
+                "  mo_id text,\n" +
                 "  day text,\n" +
                 "  event_time timestamp,\n" +
                 "  value double,\n" +
                 "  tags map<text, text>,\n" +
-                "  PRIMARY KEY ((metric, mo, day), event_time)\n" +
+                "  PRIMARY KEY ((metric, mo_type, mo_id, day), event_time)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 1800000\n" +
@@ -49,10 +50,10 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
         String metricTable = "" +
                 "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".mo (\n" +
                 "  metric text,\n" +
-                "  category text,\n" +
+                "  mo_type text,\n" +
                 "  mo_path text,\n" +
                 "  tags map<text, text>,\n" +
-                "  PRIMARY KEY ((metric,category),mo_path)\n" +
+                "  PRIMARY KEY ((metric, mo_type),mo_path)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 1800000\n" +

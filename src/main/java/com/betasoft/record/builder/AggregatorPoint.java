@@ -11,9 +11,11 @@ public class AggregatorPoint {
 
     private String metric;
 
-    private String moc;
+    private String moType;
 
-    private String mo;
+    private String moId;
+
+    private String day;
 
     private double value;
 }

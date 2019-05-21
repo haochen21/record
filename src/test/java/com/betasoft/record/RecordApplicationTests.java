@@ -25,32 +25,32 @@ public class RecordApplicationTests {
     @Test
     public void saveTest() throws Exception {
         List<Metric> metrics = new ArrayList<>();
-        metrics.add(createMetric("OSCPU_CPU_LOAD","host","Windows","10001"));
-        metrics.add(createMetric("OSCPU_CPU_LOAD","host","NetworkDevice","10002"));
-        metrics.add(createMetric("OSCPU_CPU_LOAD","host","Windows","10003"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "Windows", "10001"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "NetworkDevice", "10002"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "Windows", "10003"));
 
-        metrics.add(createMetric("CPU_LOAD","host","Windows","10001"));
-        metrics.add(createMetric("CPU_LOAD","host","NetworkDevice","10002"));
+        metrics.add(createMetric("CPU_LOAD", "Windows", "10001"));
+        metrics.add(createMetric("CPU_LOAD", "NetworkDevice", "10002"));
 
         Flux<Metric> metricFlux = Flux.fromIterable(metrics);
         metricService.saveMetrics(metricFlux)
                 .log()
                 .subscribe();
 
-        Thread.sleep(10*1000);
+        Thread.sleep(10 * 1000);
     }
 
-    private Metric createMetric(String metricName, String category, String moType,String moId){
+    private Metric createMetric(String metricName, String moType, String moId) {
         Random random = new Random();
         Calendar nowCalendar = Calendar.getInstance();
 
         Metric metric = new Metric();
         metric.setName(metricName);
         Map<String, String> tags = new HashMap<>();
-        tags.put("moc", category);
+        tags.put("moc", moType);
 
         StringBuilder moPathSb = new StringBuilder();
-        moPathSb.append(category).append(".").append(moType).append(",uuid=\"").append(moId).append("\"");
+        moPathSb.append(moType).append(".domain=\"defaultEngine\"").append(",uuid=\"").append(moId).append("\"");
         tags.put("mo", moPathSb.toString());
         metric.setTags(tags);
 
@@ -62,7 +62,7 @@ public class RecordApplicationTests {
             samplePoints.add(new Object[]{sampleCalendar.getTime().getTime(), random.nextDouble()});
         }
 
-        metric.setTtl(3*60*1000);
+        metric.setTtl(3 * 60 * 1000);
         return metric;
     }
 }

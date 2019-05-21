@@ -26,7 +26,7 @@ public class MetricServiceImpl implements MetricService {
     @Autowired
     MoRepository moRepository;
 
-    //metric:category:mos
+    //metric:moType:mos
     ConcurrentHashMap<String, ConcurrentHashMap<String, List<Mo>>> moMap;
 
     @PostConstruct
@@ -37,7 +37,7 @@ public class MetricServiceImpl implements MetricService {
                                     mo.getMoKey().getMetric(),
                             ConcurrentHashMap::new,
                             Collectors.groupingBy(mo ->
-                                            mo.getMoKey().getCategory(),
+                                            mo.getMoKey().getMoType(),
                                     ConcurrentHashMap::new,
                                     toList()
                             )
@@ -80,13 +80,13 @@ public class MetricServiceImpl implements MetricService {
 
     public Mono<Mo> findByMetricAndMo(Metric metric) {
         String metricName = metric.getName();
-        String category = metric.getTags().get("moc");
+        String moType = metric.getTags().get("moc");
         String moPath = metric.getTags().get("mo");
         Optional<Mo> moOptional = moMap.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(metricName))
                 .map(entry -> entry.getValue())
                 .flatMap(entry1 -> entry1.entrySet().stream())
-                .filter(entry -> entry.getKey().equals(category))
+                .filter(entry -> entry.getKey().equals(moType))
                 .map(entry -> entry.getValue())
                 .flatMap(List::stream)
                 .filter(mo -> mo.getMoKey().getMoPath().equals(moPath))
@@ -96,7 +96,7 @@ public class MetricServiceImpl implements MetricService {
 
     private Flux<DataPointWrapper> getDataPoint(Metric metric) {
         String metricName = metric.getName();
-        String category = metric.getTags().get("moc");
+        String moType = metric.getTags().get("moc");
         String moPath = metric.getTags().get("mo");
         int ttl = metric.getTtl();
 
@@ -106,12 +106,13 @@ public class MetricServiceImpl implements MetricService {
                     Double value = Double.parseDouble(samplePoint[1].toString());
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-                    DataPointKey dataPointKey = new DataPointKey(metricName, moPath, sdf.format(eventTime), eventTime);
+                    DataPointKey dataPointKey = new DataPointKey(metricName, moType, moPath, sdf.format(eventTime), eventTime);
+                    metric.getTags().remove("moc");
                     metric.getTags().remove("mo");
                     DataPoint dataPoint = new DataPoint(dataPointKey, value, metric.getTags());
                     dataPoint.setDataPointKey(dataPointKey);
 
-                    DataPointWrapper dataPointWrapper = new DataPointWrapper(dataPoint, ttl, metricName, category, moPath);
+                    DataPointWrapper dataPointWrapper = new DataPointWrapper(dataPoint, ttl, metricName, moType, moPath);
                     return dataPointWrapper;
                 });
     }

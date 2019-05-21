@@ -19,8 +19,8 @@ public class MoKey implements Serializable {
     @PrimaryKeyColumn(name = "metric", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String metric;
 
-    @PrimaryKeyColumn(name = "category", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-    private String category;
+    @PrimaryKeyColumn(name = "mo_type", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private String moType;
 
     @PrimaryKeyColumn(name = "mo_path", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
     private String moPath;

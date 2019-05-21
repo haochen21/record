@@ -23,12 +23,12 @@ public class MetricControllerTest {
     public void testSaveMetrics() {
         List<Metric> metrics = new ArrayList<>();
 
-        metrics.add(createMetric("OSCPU_CPU_LOAD", "host", "Windows", "10001"));
-        metrics.add(createMetric("OSCPU_CPU_LOAD", "host", "NetworkDevice", "10002"));
-        metrics.add(createMetric("OSCPU_CPU_LOAD", "host", "Windows", "10003"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "Windows", "10001"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "NetworkDevice", "10002"));
+        metrics.add(createMetric("OSCPU_CPU_LOAD", "Windows", "10003"));
 
-        metrics.add(createMetric("CPU_LOAD", "host", "Windows", "10001"));
-        metrics.add(createMetric("CPU_LOAD", "host", "NetworkDevice", "10002"));
+        metrics.add(createMetric("CPU_LOAD", "Windows", "10001"));
+        metrics.add(createMetric("CPU_LOAD", "NetworkDevice", "10002"));
 
         webTestClient.post()
                 .uri("/api/v1/datapoints")
@@ -40,18 +40,17 @@ public class MetricControllerTest {
                 .isEqualTo(new Long(5));
     }
 
-    private Metric createMetric(String metricName, String category, String moType, String moId) {
+    private Metric createMetric(String metricName, String moType, String moId) {
         Random random = new Random();
         Calendar nowCalendar = Calendar.getInstance();
 
         Metric metric = new Metric();
         metric.setName(metricName);
         Map<String, String> tags = new HashMap<>();
-        tags.put("moc", category);
+        tags.put("moc", moType);
 
-        StringBuilder moPathSb = new StringBuilder();
-        moPathSb.append(category).append(".").append(moType).append(",uuid=\"").append(moId).append("\"");
-        tags.put("mo", moPathSb.toString());
+        tags.put("mo", moId);
+        tags.put("info", "" + random.nextInt(100000));
         metric.setTags(tags);
 
         List<Object[]> samplePoints = new ArrayList<>();
@@ -62,7 +61,7 @@ public class MetricControllerTest {
             samplePoints.add(new Object[]{sampleCalendar.getTime().getTime(), random.nextDouble()});
         }
 
-        metric.setTtl(3 * 60 * 1000);
+        metric.setTtl(120 * 60);
         return metric;
     }
 }

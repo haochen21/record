@@ -34,6 +34,7 @@ public class Metric {
     private List<Object[]> samplePoints;
 
     // select metric,mo,ttl(value) from data_point;
+    // second
     @JsonProperty("ttl")
     private int ttl;
 }

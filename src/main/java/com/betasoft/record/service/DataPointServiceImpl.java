@@ -43,15 +43,15 @@ public class DataPointServiceImpl implements DataPointService {
     }
 
     @Override
-    public Mono<Queries> find(String metric, String moc, List<String> mos, Date beginDate, Date endDate) {
-        Map<String, Result> resultMap = createResultMap(metric, moc, mos);
+    public Mono<Queries> find(String metric, String moc, List<String> moIds, Date beginDate, Date endDate) {
+        Map<String, Result> resultMap = createResultMap(metric, moc, moIds);
 
-        Mono<List<DataPoint>> dataPointsMono = dataPointRepository.findSamplePoints(metric, moc, mos, beginDate, endDate)
+        Mono<List<DataPoint>> dataPointsMono = dataPointRepository.findSamplePoints(metric, moc, moIds, beginDate, endDate)
                 .collectList();
         return dataPointsMono.map(dataPoints -> {
             dataPoints.forEach(dataPoint -> {
                 Object[] samplePoint = {dataPoint.getDataPointKey().getEventTime().getTime(), dataPoint.getValue()};
-                resultMap.get(dataPoint.getDataPointKey().getMo()).getSamplePoints().add(samplePoint);
+                resultMap.get(dataPoint.getDataPointKey().getMoId()).getSamplePoints().add(samplePoint);
             });
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
@@ -67,7 +67,7 @@ public class DataPointServiceImpl implements DataPointService {
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
-                resultMap.get(aggregatorPoint.getMo()).getSamplePoints().add(samplePoint);
+                resultMap.get(aggregatorPoint.getMoId()).getSamplePoints().add(samplePoint);
             });
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
@@ -83,7 +83,7 @@ public class DataPointServiceImpl implements DataPointService {
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
-                resultMap.get(aggregatorPoint.getMo()).getSamplePoints().add(samplePoint);
+                resultMap.get(aggregatorPoint.getMoId()).getSamplePoints().add(samplePoint);
             });
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
@@ -99,7 +99,7 @@ public class DataPointServiceImpl implements DataPointService {
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
-                resultMap.get(aggregatorPoint.getMo()).getSamplePoints().add(samplePoint);
+                resultMap.get(aggregatorPoint.getMoId()).getSamplePoints().add(samplePoint);
             });
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
