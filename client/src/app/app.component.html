@@ -1,0 +1,84 @@
+<div style="background: #ECECEC;padding:30px;">
+  <div nz-row>
+    <div nz-col nzSpan="12">
+        <nz-card style="width:900px;margin-bottom: 20px;" [nzBordered]="false" nzTitle="时间范围">
+            <div nz-row style="margin-bottom: 20px;">
+                <div nz-col nzSpan="3">开始时间：</div>
+                <div nz-col nzSpan="5"><nz-date-picker [(ngModel)]="beginDate"></nz-date-picker></div>
+                <div nz-col nzSpan="5"><nz-time-picker [(ngModel)]="beginTime"></nz-time-picker></div>
+            </div>
+            <div nz-row>
+                <div nz-col nzSpan="3">结束时间：</div>
+                <div nz-col nzSpan="5"><nz-date-picker [(ngModel)]="endDate"></nz-date-picker></div>
+                <div nz-col nzSpan="5"><nz-time-picker [(ngModel)]="endTime"></nz-time-picker></div>
+            </div>  
+          </nz-card> 
+          <nz-card style="width:900px;margin-bottom: 20px;" [nzBordered]="false" nzTitle="指标选择">
+              <div nz-row style="margin-bottom: 20px;">
+                <div nz-col nzSpan="3">指标名称：</div>
+                <div nz-col nzSpan="12">
+                  <div class="metric-input">
+                      <nz-select style="width: 200px;" [nzServerSearch]="true" (nzOnSearch)="onMetricSerach($event)"
+                         (ngModelChange)="metricChange($event)"
+                          nzShowSearch nzAllowClear nzPlaceHolder="指标名称" [(ngModel)]="metricValue">
+                        <nz-option *ngFor="let metric of metrics" [nzLabel]="metric" [nzValue]="metric">
+                        </nz-option>
+                      </nz-select>                      
+                  </div>
+                </div>
+              </div>
+              <div nz-row style="margin-bottom: 20px;">
+                  <div nz-col nzSpan="3">管理类型：</div>
+                  <div nz-col nzSpan="12">
+                    <div class="moc-input">
+                        <nz-select style="width: 200px;" nzShowSearch nzAllowClear nzPlaceHolder="管理类型" 
+                           (ngModelChange)="mocChange($event)" [(ngModel)]="mocValue">
+                            <nz-option *ngFor="let moc of mocs" [nzLabel]="moc" [nzValue]="moc">
+                          </nz-option>
+                        </nz-select>   
+                    </div>
+                </div>
+              </div>
+              <div nz-row>
+                  <div nz-col nzSpan="3">管理对象：</div>
+                  <div nz-col nzSpan="18">
+                    <div class="mo-input">
+                        <nz-select style="width: 200px;" nzMode="tags" nzShowSearch nzAllowClear nzPlaceHolder="管理对象" [(ngModel)]="mosValue">
+                             <nz-option *ngFor="let mo of mos" [nzLabel]="mo" [nzValue]="mo">
+                           </nz-option>
+                         </nz-select> 
+                    </div>
+                </div>
+              </div>
+          </nz-card>
+          <nz-card style="width:900px;margin-bottom: 20px;" [nzBordered]="false" nzTitle="统计函数">
+              <div nz-row style="margin-bottom: 20px;">
+                  <div nz-col nzSpan="3">函数：</div>
+                  <div nz-col nzSpan="5">
+                      <nz-select style="width: 120px;" [(ngModel)]="selectedAggregatorValue" nzAllowClear nzPlaceHolder="Choose">
+                          <nz-option nzValue="avg" nzLabel="avg"></nz-option>
+                          <nz-option nzValue="min" nzLabel="min"></nz-option>
+                          <nz-option nzValue="max" nzLabel="max"></nz-option>
+                       </nz-select>
+                  </div>          
+              </div>
+              <div nz-row>
+                  <div nz-col>
+                      <button nz-button nzType="primary" nzBlock (click)='onSearch()'><i nz-icon type="search"></i>查询</button>
+                  </div>          
+              </div>
+          </nz-card>
+    </div>
+    <div nz-col nzSpan="12">
+        <nz-card style="width:900px;margin-bottom: 20px;" [nzBordered]="false" nzTitle="查询json">
+            <pre>{{queryBuilder | json}}</pre>
+        </nz-card>
+    </div>
+  </div>  
+</div>
+
+<div nz-row>
+  <div nz-col nzSpan="24">
+    <chart [options]="options"  style="width: 100%; height: 400px; display: block;"></chart>
+  </div>
+</div>`
