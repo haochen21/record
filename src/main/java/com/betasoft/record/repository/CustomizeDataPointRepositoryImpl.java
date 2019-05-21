@@ -21,60 +21,114 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomizeDataPointRepositoryImpl.class);
 
     @Override
-    public Flux<AggregatorPoint> avg(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
-        String moCondition = getMoCondition(moIds);
+    public Mono<List<AggregatorPoint>> avg(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+        List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
-        //cassandra driver保存日期数据时，自动转换成UTC时间，需要把日期转换成UTC时间
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        StringBuilder avgSql = new StringBuilder();
-        avgSql.append("SELECT metric, moc, mo, avg(value) as value FROM data_point where metric ='").append(metric).append("' ");
-        avgSql.append("and moc = '").append(moType).append("' ");
-        avgSql.append("and mo").append(moCondition).append(" ");
-        avgSql.append("and event_time >='").append(sdf.format(beginDate)).append("' ");
-        avgSql.append("and event_time <='").append(sdf.format(endDate)).append("' ");
-        avgSql.append("group by metric,mo");
-        LOGGER.info(avgSql.toString());
-        Flux<AggregatorPoint> aggregatorPoints = reactiveCassandraOperations.select(avgSql.toString(), AggregatorPoint.class);
-        return aggregatorPoints;
+        return Flux.fromIterable(queryDates)
+                .flatMap(queryDate -> Flux.fromIterable(moIds)
+                        .map(moId -> {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                            SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            StringBuilder sql = new StringBuilder();
+                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, avg(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and mo_type = '").append(moType).append("' ");
+                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
+                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            return sql.toString();
+                        }))
+                .log()
+                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
+                .log()
+                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
+                .log()
+                .map(agMap -> {
+                    List<AggregatorPoint> minAgs = new ArrayList<>();
+                    agMap.forEach((key, value) -> {
+                        AggregatorPoint firstAg = value.iterator().next();
+                        double avg = value.stream().mapToDouble(AggregatorPoint::getValue).average().getAsDouble();
+                        firstAg.setValue(avg);
+                        minAgs.add(firstAg);
+                    });
+                    return minAgs;
+                });
     }
 
     @Override
-    public Flux<AggregatorPoint> max(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
-        String moCondition = getMoCondition(moIds);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        StringBuilder maxSql = new StringBuilder();
-        maxSql.append("SELECT metric, moc, mo, max(value) as value FROM data_point where metric ='").append(metric).append("' ");
-        maxSql.append("and moc = '").append(moType).append("' ");
-        maxSql.append("and mo").append(moCondition).append(" ");
-        maxSql.append("and event_time >='").append(sdf.format(beginDate)).append("' ");
-        maxSql.append("and event_time <='").append(sdf.format(endDate)).append("' ");
-        maxSql.append("group by metric,mo");
-        LOGGER.info(maxSql.toString());
-        Flux<AggregatorPoint> aggregatorPoints = reactiveCassandraOperations.select(maxSql.toString(), AggregatorPoint.class);
-        return aggregatorPoints;
+    public Mono<List<AggregatorPoint>> max(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+        List<Date[]> queryDates = getQueryDates(beginDate, endDate);
+
+        return Flux.fromIterable(queryDates)
+                .flatMap(queryDate -> Flux.fromIterable(moIds)
+                        .map(moId -> {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                            SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            StringBuilder sql = new StringBuilder();
+                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, max(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and mo_type = '").append(moType).append("' ");
+                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
+                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            return sql.toString();
+                        }))
+                .log()
+                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
+                .log()
+                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
+                .log()
+                .map(agMap -> {
+                    List<AggregatorPoint> minAgs = new ArrayList<>();
+                    agMap.forEach((key, value) -> {
+                        AggregatorPoint firstAg = value.iterator().next();
+                        double max = value.stream().mapToDouble(AggregatorPoint::getValue).max().getAsDouble();
+                        firstAg.setValue(max);
+                        minAgs.add(firstAg);
+                    });
+                    return minAgs;
+                });
     }
 
     @Override
-    public Flux<AggregatorPoint> min(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
-        List<Date> queryDates = getDatesBetween(beginDate, endDate);
-        String dayCondition = getDateCondition(queryDates);
-        String moIdCondition = getMoCondition(moIds);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        StringBuilder maxSql = new StringBuilder();
-        maxSql.append("SELECT metric, mo_type as moType, mo_id as moId, day, min(value) as value FROM data_point where metric ='").append(metric).append("' ");
-        maxSql.append("and mo_type = '").append(moType).append("' ");
-        maxSql.append("and mo_id").append(moIdCondition).append(" ");
-        maxSql.append("and day").append(dayCondition).append(" ");
-        maxSql.append("and event_time >='").append(sdf.format(beginDate)).append("' ");
-        maxSql.append("and event_time <='").append(sdf.format(endDate)).append("' ");
-        maxSql.append("group by metric,mo_type,mo_id,day");
-        LOGGER.info(maxSql.toString());
-        Flux<AggregatorPoint> aggregatorPoints = reactiveCassandraOperations.select(maxSql.toString(), AggregatorPoint.class);
-        return aggregatorPoints;
+    public Mono<List<AggregatorPoint>> min(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+        List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
+        return Flux.fromIterable(queryDates)
+                .flatMap(queryDate -> Flux.fromIterable(moIds)
+                        .map(moId -> {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                            SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            StringBuilder sql = new StringBuilder();
+                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, min(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and mo_type = '").append(moType).append("' ");
+                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
+                            sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
+                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            return sql.toString();
+                        }))
+                .log()
+                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
+                .log()
+                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
+                .log()
+                .map(agMap -> {
+                    List<AggregatorPoint> minAgs = new ArrayList<>();
+                    agMap.forEach((key, value) -> {
+                        AggregatorPoint firstAg = value.iterator().next();
+                        double min = value.stream().mapToDouble(AggregatorPoint::getValue).min().getAsDouble();
+                        firstAg.setValue(min);
+                        minAgs.add(firstAg);
+                    });
+                    return minAgs;
+                });
     }
 
     @Override
@@ -82,55 +136,25 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
         List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
         return Flux.fromIterable(queryDates)
-                .flatMap(queryDate -> {
-                    return Flux.fromIterable(moIds).map(moId -> {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-                        SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
-                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                        StringBuilder findSql = new StringBuilder();
-                        findSql.append("SELECT * FROM data_point where metric ='").append(metric).append("' ");
-                        findSql.append("and mo_type = '").append(moType).append("' ");
-                        findSql.append("and mo_id = '").append(moId).append("'");
-                        findSql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
-                        findSql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
-                        findSql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
-                        return findSql.toString();
-                    });
-                })
+                .flatMap(queryDate -> Flux.fromIterable(moIds)
+                        .map(moId -> {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                            SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            StringBuilder findSql = new StringBuilder();
+                            findSql.append("SELECT * FROM data_point where metric ='").append(metric).append("' ");
+                            findSql.append("and mo_type = '").append(moType).append("' ");
+                            findSql.append("and mo_id = '").append(moId).append("' ");
+                            findSql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
+                            findSql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
+                            findSql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
+                            return findSql.toString();
+                        }))
                 .log()
                 .flatMap(findSql -> reactiveCassandraOperations.select(findSql, DataPoint.class))
                 .log()
                 .subscribeOn(Schedulers.newParallel("query"));
 
-    }
-
-    private String getMoCondition(List<String> mos) {
-        StringBuilder moSb = new StringBuilder();
-        if (mos.size() == 1) {
-            moSb.append(" = '").append(mos.get(0)).append("'");
-        } else {
-            moSb.append(" in ('").append(mos.get(0)).append("'");
-            for (int i = 1; i < mos.size(); i++) {
-                moSb.append(",'").append(mos.get(i)).append("'");
-            }
-            moSb.append(")");
-        }
-        return moSb.toString();
-    }
-
-    private String getDateCondition(List<Date> dates) {
-        SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
-        StringBuilder dateSb = new StringBuilder();
-        if (dates.size() == 1) {
-            dateSb.append(" = '").append(daySdf.format(dates.get(0))).append("'");
-        } else {
-            dateSb.append(" in ('").append(daySdf.format(dates.get(0))).append("'");
-            for (int i = 1; i < dates.size(); i++) {
-                dateSb.append(",'").append(daySdf.format(dates.get(i))).append("'");
-            }
-            dateSb.append(")");
-        }
-        return dateSb.toString();
     }
 
     private List<Date[]> getQueryDates(Date beginDate, Date endDate) {

@@ -67,7 +67,7 @@ public class QueryControllerTest {
                 });
     }
 
-    @Test
+    //@Test
     public void queryMin() throws Exception {
         List<String> mos = new ArrayList<>();
         mos.add("10002");
@@ -78,7 +78,7 @@ public class QueryControllerTest {
         QueryBuilder queryBuilder = new QueryBuilder();
 
         Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
-        Date endDate = sdf.parse(" 2019-05-21 19:13:59");
+        Date endDate = sdf.parse(" 2019-05-21 23:13:59");
         queryBuilder.setBeginDate(beginDate.getTime());
         queryBuilder.setEndDate(endDate.getTime());
 
@@ -112,8 +112,99 @@ public class QueryControllerTest {
                         ex.printStackTrace();
                     }
                 });
+    }
 
-        Thread.sleep(10*1000);
+    //@Test
+    public void queryMax() throws Exception {
+        List<String> mos = new ArrayList<>();
+        mos.add("10001");
+        mos.add("10003");
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        QueryBuilder queryBuilder = new QueryBuilder();
+
+        Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
+        Date endDate = sdf.parse(" 2019-05-21 23:13:59");
+        queryBuilder.setBeginDate(beginDate.getTime());
+        queryBuilder.setEndDate(endDate.getTime());
+
+        QueryMetric queryMetric = new QueryMetric();
+        queryMetric.setName("OSCPU_CPU_LOAD");
+
+        Map<String, Set<String>> tags = new HashMap<>();
+        tags.put("moc", new HashSet<>(Arrays.asList("Windows")));
+        tags.put("mo", new HashSet<>(mos));
+        queryMetric.setTags(tags);
+
+        QueryAggregator queryAggregator = new QueryAggregator();
+        queryAggregator.setName("max");
+        queryMetric.setAggregators(Arrays.asList(queryAggregator));
+
+        queryBuilder.setMetrics(Arrays.asList(queryMetric));
+
+        webTestClient.post()
+                .uri("/api/v1/datapoints/query")
+                .body(Mono.just(queryBuilder), QueryBuilder.class)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Queries.class)
+                .consumeWith(entityExchangeResult -> {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    try{
+                        String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
+                        System.out.println(result);
+                    }catch(Exception ex){
+                        ex.printStackTrace();
+                    }
+                });
+    }
+
+    @Test
+    public void queryAvg() throws Exception {
+        List<String> mos = new ArrayList<>();
+        mos.add("10001");
+        mos.add("10003");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        QueryBuilder queryBuilder = new QueryBuilder();
+
+        Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
+        Date endDate = sdf.parse(" 2019-05-21 23:13:59");
+        queryBuilder.setBeginDate(beginDate.getTime());
+        queryBuilder.setEndDate(endDate.getTime());
+
+        QueryMetric queryMetric = new QueryMetric();
+        queryMetric.setName("OSCPU_CPU_LOAD");
+
+        Map<String, Set<String>> tags = new HashMap<>();
+        tags.put("moc", new HashSet<>(Arrays.asList("Windows")));
+        tags.put("mo", new HashSet<>(mos));
+        queryMetric.setTags(tags);
+
+        QueryAggregator queryAggregator = new QueryAggregator();
+        queryAggregator.setName("avg");
+        queryMetric.setAggregators(Arrays.asList(queryAggregator));
+
+        queryBuilder.setMetrics(Arrays.asList(queryMetric));
+
+        webTestClient.post()
+                .uri("/api/v1/datapoints/query")
+                .body(Mono.just(queryBuilder), QueryBuilder.class)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Queries.class)
+                .consumeWith(entityExchangeResult -> {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    try{
+                        String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
+                        System.out.println(result);
+                    }catch(Exception ex){
+                        ex.printStackTrace();
+                    }
+                });
     }
 }

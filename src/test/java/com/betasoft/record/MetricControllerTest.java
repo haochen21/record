@@ -61,7 +61,7 @@ public class MetricControllerTest {
             samplePoints.add(new Object[]{sampleCalendar.getTime().getTime(), random.nextDouble()});
         }
 
-        metric.setTtl(120 * 60);
+        metric.setTtl(0);
         return metric;
     }
 }

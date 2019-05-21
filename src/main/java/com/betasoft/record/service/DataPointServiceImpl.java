@@ -62,8 +62,7 @@ public class DataPointServiceImpl implements DataPointService {
     @Override
     public Mono<Queries> avg(String metric, String moc, List<String> mos, Date beginDate, Date endDate) {
         Map<String, Result> resultMap = createResultMap(metric, moc, mos);
-        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.avg(metric, moc, mos, beginDate, endDate)
-                .collectList();
+        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.avg(metric, moc, mos, beginDate, endDate);
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
@@ -78,8 +77,7 @@ public class DataPointServiceImpl implements DataPointService {
     @Override
     public Mono<Queries> max(String metric, String moc, List<String> mos, Date beginDate, Date endDate) {
         Map<String, Result> resultMap = createResultMap(metric, moc, mos);
-        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.max(metric, moc, mos, beginDate, endDate)
-                .collectList();
+        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.max(metric, moc, mos, beginDate, endDate);
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
@@ -94,8 +92,7 @@ public class DataPointServiceImpl implements DataPointService {
     @Override
     public Mono<Queries> min(String metric, String moc, List<String> mos, Date beginDate, Date endDate) {
         Map<String, Result> resultMap = createResultMap(metric, moc, mos);
-        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.min(metric, moc, mos, beginDate, endDate)
-                .collectList();
+        Mono<List<AggregatorPoint>> aggregatorPointsMono = dataPointRepository.min(metric, moc, mos, beginDate, endDate);
         return aggregatorPointsMono.map(aggregatorPoints -> {
             aggregatorPoints.forEach(aggregatorPoint -> {
                 Object[] samplePoint = {new Date().getTime(), aggregatorPoint.getValue()};
