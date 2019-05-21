@@ -51,9 +51,9 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".mo (\n" +
                 "  metric text,\n" +
                 "  mo_type text,\n" +
-                "  mo_path text,\n" +
+                "  mo_id text,\n" +
                 "  tags map<text, text>,\n" +
-                "  PRIMARY KEY ((metric, mo_type),mo_path)\n" +
+                "  PRIMARY KEY ((metric, mo_type),mo_id)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 1800000\n" +

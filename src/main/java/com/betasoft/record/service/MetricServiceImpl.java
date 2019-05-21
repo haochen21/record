@@ -3,19 +3,13 @@ package com.betasoft.record.service;
 import com.betasoft.record.builder.Metric;
 import com.betasoft.record.model.*;
 import com.betasoft.record.repository.DataPointRepository;
-import com.betasoft.record.repository.MoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class MetricServiceImpl implements MetricService {
@@ -24,27 +18,9 @@ public class MetricServiceImpl implements MetricService {
     DataPointRepository dataPointRepository;
 
     @Autowired
-    MoRepository moRepository;
+    MoServiceImpl moServiceImpl;
 
-    //metric:moType:mos
-    ConcurrentHashMap<String, ConcurrentHashMap<String, List<Mo>>> moMap;
-
-    @PostConstruct
-    public void init() {
-        moRepository.findAll().collectList().subscribe(mos -> {
-            moMap = mos.stream()
-                    .collect(Collectors.groupingBy(mo ->
-                                    mo.getMoKey().getMetric(),
-                            ConcurrentHashMap::new,
-                            Collectors.groupingBy(mo ->
-                                            mo.getMoKey().getMoType(),
-                                    ConcurrentHashMap::new,
-                                    toList()
-                            )
-                    ));
-            System.out.println(moMap.toString());
-            moMap.clear();
-        });
+    public MetricServiceImpl() {
 
     }
 
@@ -70,7 +46,7 @@ public class MetricServiceImpl implements MetricService {
         });
 
         return filterMetricFlux
-                .flatMap(metric -> saveMo(metric).map(metric1 -> metric1))
+                .flatMap(metric -> moServiceImpl.saveMo(metric).map(metric1 -> metric1))
                 .flatMap(this::getDataPoint)
                 .flatMap(dataPointWrapper ->
                         dataPointRepository.insert(dataPointWrapper.getDataPoint(), dataPointWrapper.getTtl()))
@@ -78,21 +54,6 @@ public class MetricServiceImpl implements MetricService {
 
     }
 
-    public Mono<Mo> findByMetricAndMo(Metric metric) {
-        String metricName = metric.getName();
-        String moType = metric.getTags().get("moc");
-        String moPath = metric.getTags().get("mo");
-        Optional<Mo> moOptional = moMap.entrySet().stream()
-                .filter(entry -> entry.getKey().equals(metricName))
-                .map(entry -> entry.getValue())
-                .flatMap(entry1 -> entry1.entrySet().stream())
-                .filter(entry -> entry.getKey().equals(moType))
-                .map(entry -> entry.getValue())
-                .flatMap(List::stream)
-                .filter(mo -> mo.getMoKey().getMoPath().equals(moPath))
-                .findAny();
-        return Mono.justOrEmpty(moOptional);
-    }
 
     private Flux<DataPointWrapper> getDataPoint(Metric metric) {
         String metricName = metric.getName();
@@ -117,31 +78,5 @@ public class MetricServiceImpl implements MetricService {
                 });
     }
 
-    private Mono<Metric> saveMo(Metric metric) {
-        return findByMetricAndMo(metric)
-                .switchIfEmpty(Mono.defer(() -> {
-                    String metricName = metric.getName();
-                    String category = metric.getTags().get("moc");
-                    String moPath = metric.getTags().get("mo");
-                    MoKey metricMoKey = new MoKey(metric.getName(), category, moPath);
-                    Mo mo = new Mo();
-                    mo.setMoKey(metricMoKey);
-                    for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
-                        if (!entry.getKey().equals("mo") &&
-                                !entry.getKey().equals("category")) {
-                            mo.getTags().put(entry.getKey(), entry.getValue());
-                        }
-                    }
-                    moMap.computeIfAbsent(metricName, key -> {
-                        ConcurrentHashMap<String, List<Mo>> tempMap = new ConcurrentHashMap<>();
-                        tempMap.put(category, new ArrayList<>());
-                        return tempMap;
-                    });
-                    moMap.get(metricName).computeIfAbsent(category, key -> new ArrayList<>());
-                    moMap.get(metricName).get(category).add(mo);
-                    return Mono.just(mo);
-                }))
-                .zipWhen(mo -> moRepository.save(mo))
-                .map(tuple2 -> metric);
-    }
+
 }
