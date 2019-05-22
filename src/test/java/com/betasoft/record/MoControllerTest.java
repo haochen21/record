@@ -19,7 +19,7 @@ public class MoControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @Test
+    //@Test
     public void testFilterMetric() {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU");
@@ -63,7 +63,7 @@ public class MoControllerTest {
                 });
     }
 
-    @Test
+    //@Test
     public void testFindMoByMetricAndMoType() {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU_CPU_LOAD");

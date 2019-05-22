@@ -93,32 +93,28 @@ public class MoServiceImpl implements MoService {
 
     @Override
     public Mono<List<String>> filterMetric(Mono<Map> metricMono) {
-        return metricMono.map(metricMap -> {
-            String metric = metricMap.get("metric").toString();
-            List<String> metrics = moMap.entrySet().stream()
-                    .map(entry -> entry.getKey())
-                    .filter(metricKey -> metricKey.toLowerCase().contains(metric.toLowerCase()))
-                    .collect(Collectors.toList());
-            return metrics;
-        });
+        return metricMono.zipWhen(metricMap -> Flux.fromStream(moMap.entrySet().stream())
+                .map(entry -> entry.getKey())
+                .filter(metricKey -> metricKey.toLowerCase().contains(metricMap.get("metric").toString().toLowerCase()))
+                .collectList())
+                .map(tuple2 -> tuple2.getT2());
     }
 
     @Override
     public Mono<List<String>> findMoTypeByMetric(Mono<Map> metricMono) {
-        return metricMono.map(metricMap -> {
-            String metric = metricMap.get("metric").toString();
-            List<String> moTypes = moMap.entrySet().stream()
-                    .filter(entry -> entry.getKey().equals(metric))
-                    .map(entry -> entry.getValue())
-                    .map(sortedMap -> sortedMap.keySet())
-                    .flatMap(Set::stream)
-                    .collect(Collectors.toList());
-            return moTypes;
-        });
+        return metricMono.zipWhen(metricMap -> Flux.fromStream(moMap.entrySet().stream())
+                .filter(entry -> entry.getKey().equals(metricMap.get("metric").toString()))
+                .map(entry -> entry.getValue())
+                .map(moTypeMap -> moTypeMap.keySet())
+                .flatMap(moTypeEntry ->
+                        Flux.fromStream(moTypeEntry.stream()).map(moType -> moType))
+                .collectList())
+                .map(tuple2 -> tuple2.getT2());
     }
 
     @Override
     public Mono<List<String>> findMoByMetricAndMoType(Mono<Map> metricMono) {
+
         return metricMono.map(metricMap -> {
             String metric = metricMap.get("metric").toString();
             String moType = metricMap.get("moType").toString();
