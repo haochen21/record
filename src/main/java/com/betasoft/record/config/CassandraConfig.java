@@ -40,7 +40,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 "  PRIMARY KEY ((metric, mo_type, mo_id, day), event_time)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
-                " AND default_time_to_live = 1800000\n" +
+                " AND default_time_to_live = 31536000\n" +
                 " AND memtable_flush_period_in_ms = 600\n" +
                 " AND compaction = {'compaction_window_size': '14'," +
                 " 'compaction_window_unit': 'DAYS'," +
@@ -56,7 +56,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 "  PRIMARY KEY ((metric, mo_type),mo_id)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
-                " AND default_time_to_live = 1800000\n" +
+                " AND default_time_to_live = 31536000\n" +
                 " AND memtable_flush_period_in_ms = 600\n" +
                 " AND compaction = {'compaction_window_size': '14'," +
                 " 'compaction_window_unit': 'DAYS'," +

@@ -67,7 +67,7 @@ export class AppComponent {
   metricChange(value: string): void {
     this.mocs = [];
     this.mocValue = null;
-    let url = "/api/v1/metric/moc";
+    let url = "/api/v1/metric/moType";
     let body = {};
     body["metric"] = value;
     this.http
@@ -80,10 +80,10 @@ export class AppComponent {
   mocChange(value: string): void {
     this.mos = [];
     this.mosValue = [];
-    let url = "/api/v1/metric/moc/mo";
+    let url = "/api/v1/metric/moId";
     let body = {};
     body["metric"] = this.metricValue;
-    body["moc"] = value;
+    body["moType"] = value;
     this.http
       .post(url, body, {})
       .subscribe((data: any) => {

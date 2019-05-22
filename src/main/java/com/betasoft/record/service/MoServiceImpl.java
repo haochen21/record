@@ -68,10 +68,10 @@ public class MoServiceImpl implements MoService {
                 .switchIfEmpty(Mono.defer(() -> {
                     String metricName = metric.getName();
                     String category = metric.getTags().get("moc");
-                    String moPath = metric.getTags().get("mo");
-                    MoKey metricMoKey = new MoKey(metric.getName(), category, moPath);
+                    String moId = metric.getTags().get("mo");
+                    MoKey moKey = new MoKey(metric.getName(), category, moId);
                     Mo mo = new Mo();
-                    mo.setMoKey(metricMoKey);
+                    mo.setMoKey(moKey);
                     for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
                         if (!entry.getKey().equals("mo") &&
                                 !entry.getKey().equals("category")) {
@@ -92,7 +92,7 @@ public class MoServiceImpl implements MoService {
     }
 
     @Override
-    public Flux<String> filterMetric(Mono<Map> metricMono) {
+    public Mono<List<String>> filterMetric(Mono<Map> metricMono) {
         return metricMono.map(metricMap -> {
             String metric = metricMap.get("metric").toString();
             List<String> metrics = moMap.entrySet().stream()
@@ -100,11 +100,11 @@ public class MoServiceImpl implements MoService {
                     .filter(metricKey -> metricKey.toLowerCase().contains(metric.toLowerCase()))
                     .collect(Collectors.toList());
             return metrics;
-        }).flux().flatMap(metricList -> Flux.fromIterable(metricList));
+        });
     }
 
     @Override
-    public Flux<String> findMoTypeByMetric(Mono<Map> metricMono) {
+    public Mono<List<String>> findMoTypeByMetric(Mono<Map> metricMono) {
         return metricMono.map(metricMap -> {
             String metric = metricMap.get("metric").toString();
             List<String> moTypes = moMap.entrySet().stream()
@@ -114,11 +114,11 @@ public class MoServiceImpl implements MoService {
                     .flatMap(Set::stream)
                     .collect(Collectors.toList());
             return moTypes;
-        }).flux().flatMap(moTypeList -> Flux.fromIterable(moTypeList));
+        });
     }
 
     @Override
-    public Flux<String> findMoByMetricAndMoType(Mono<Map> metricMono) {
+    public Mono<List<String>> findMoByMetricAndMoType(Mono<Map> metricMono) {
         return metricMono.map(metricMap -> {
             String metric = metricMap.get("metric").toString();
             String moType = metricMap.get("moType").toString();
@@ -133,6 +133,6 @@ public class MoServiceImpl implements MoService {
                     .map(MoKey::getMoId)
                     .collect(Collectors.toList());
             return mos;
-        }).flux().flatMap(moList -> Flux.fromIterable(moList));
+        });
     }
 }

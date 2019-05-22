@@ -5,6 +5,7 @@ import com.betasoft.record.model.Mo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 public interface MoService {
@@ -13,9 +14,9 @@ public interface MoService {
 
     Mono<Metric> saveMo(Metric metric);
 
-    Flux<String> filterMetric(Mono<Map> metricMono);
+    Mono<List<String>> filterMetric(Mono<Map> metricMono);
 
-    Flux<String> findMoTypeByMetric(Mono<Map> metricMono);
+    Mono<List<String>> findMoTypeByMetric(Mono<Map> metricMono);
 
-    Flux<String> findMoByMetricAndMoType(Mono<Map> metricMono);
+    Mono<List<String>> findMoByMetricAndMoType(Mono<Map> metricMono);
 }

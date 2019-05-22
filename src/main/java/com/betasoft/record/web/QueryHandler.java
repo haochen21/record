@@ -28,6 +28,7 @@ public class QueryHandler {
                 .elapsed()
                 .flatMap(tuple2 ->
                         ServerResponse.status(HttpStatus.OK)
+                                .header("executetime",tuple2.getT1().toString())
                                 .body(Mono.just(tuple2.getT2()), Queries.class));
 
     }
