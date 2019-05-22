@@ -114,21 +114,11 @@ public class MoServiceImpl implements MoService {
 
     @Override
     public Mono<List<String>> findMoByMetricAndMoType(Mono<Map> metricMono) {
+        return metricMono.zipWhen(metricMap ->
+                Flux.fromIterable(moMap.get(metricMap.get("metric").toString()).get(metricMap.get("moType").toString()))
+                        .map(mo -> mo.getMoKey().getMoId())
+                        .collectList())
+                .map(tuple2 -> tuple2.getT2());
 
-        return metricMono.map(metricMap -> {
-            String metric = metricMap.get("metric").toString();
-            String moType = metricMap.get("moType").toString();
-            List<String> mos = moMap.entrySet().stream()
-                    .filter(entry -> entry.getKey().equals(metric))
-                    .map(entry -> entry.getValue())
-                    .flatMap(sortedMap -> sortedMap.entrySet().stream())
-                    .filter(entry -> entry.getKey().equals(moType))
-                    .map(entry -> entry.getValue())
-                    .flatMap(List::stream)
-                    .map(Mo::getMoKey)
-                    .map(MoKey::getMoId)
-                    .collect(Collectors.toList());
-            return mos;
-        });
     }
 }
