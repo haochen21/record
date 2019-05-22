@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -19,6 +20,9 @@ public class MetricServiceImpl implements MetricService {
 
     @Autowired
     MoServiceImpl moServiceImpl;
+
+    @Autowired
+    Scheduler scheduler;
 
     public MetricServiceImpl() {
 
@@ -75,7 +79,7 @@ public class MetricServiceImpl implements MetricService {
 
                     DataPointWrapper dataPointWrapper = new DataPointWrapper(dataPoint, ttl, metricName, moType, moPath);
                     return dataPointWrapper;
-                });
+                }).subscribeOn(scheduler);
     }
 
 

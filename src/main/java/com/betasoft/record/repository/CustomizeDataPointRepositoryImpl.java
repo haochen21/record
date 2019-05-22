@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.ReactiveCassandraOperations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -40,11 +39,11 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
                             sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
                             return sql.toString();
                         }))
-                .log()
+                //.log()
                 .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
-                .log()
+                //.log()
                 .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
-                .log()
+                //.log()
                 .map(agMap -> {
                     List<AggregatorPoint> minAgs = new ArrayList<>();
                     agMap.forEach((key, value) -> {
@@ -77,11 +76,8 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
                             sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
                             return sql.toString();
                         }))
-                .log()
                 .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
-                .log()
                 .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
-                .log()
                 .map(agMap -> {
                     List<AggregatorPoint> minAgs = new ArrayList<>();
                     agMap.forEach((key, value) -> {
@@ -114,11 +110,8 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
                             sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
                             return sql.toString();
                         }))
-                .log()
                 .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
-                .log()
                 .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
-                .log()
                 .map(agMap -> {
                     List<AggregatorPoint> minAgs = new ArrayList<>();
                     agMap.forEach((key, value) -> {
@@ -150,10 +143,7 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
                             findSql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
                             return findSql.toString();
                         }))
-                .log()
-                .flatMap(findSql -> reactiveCassandraOperations.select(findSql, DataPoint.class))
-                .log()
-                .subscribeOn(Schedulers.newParallel("query"));
+                .flatMap(findSql -> reactiveCassandraOperations.select(findSql, DataPoint.class));
 
     }
 

@@ -6,6 +6,7 @@ import com.betasoft.record.repository.DataPointRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.util.*;
 
@@ -14,6 +15,9 @@ public class DataPointServiceImpl implements DataPointService {
 
     @Autowired
     DataPointRepository dataPointRepository;
+
+    @Autowired
+    Scheduler scheduler;
 
     @Override
     public Mono<Queries> query(Mono<QueryBuilder> queryBuilder) {
@@ -39,7 +43,7 @@ public class DataPointServiceImpl implements DataPointService {
                 }
             }
             return Mono.empty();
-        });
+        }).subscribeOn(scheduler);
     }
 
     @Override
@@ -56,7 +60,7 @@ public class DataPointServiceImpl implements DataPointService {
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
             return queries;
-        });
+        }).subscribeOn(scheduler);
     }
 
     @Override
@@ -71,7 +75,7 @@ public class DataPointServiceImpl implements DataPointService {
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
             return queries;
-        });
+        }).subscribeOn(scheduler);
     }
 
     @Override
@@ -86,7 +90,7 @@ public class DataPointServiceImpl implements DataPointService {
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
             return queries;
-        });
+        }).subscribeOn(scheduler);
     }
 
     @Override
@@ -101,7 +105,7 @@ public class DataPointServiceImpl implements DataPointService {
             Query query = new Query(new ArrayList<>(resultMap.values()));
             Queries queries = new Queries(Arrays.asList(query));
             return queries;
-        });
+        }).subscribeOn(scheduler);
     }
 
     private Map<String, Result> createResultMap(String metric, String moc, List<String> mos) {

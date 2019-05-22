@@ -24,7 +24,7 @@ public class QueryControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    //@Test
+    @Test
     public void queryFind() throws Exception {
         List<String> mos = new ArrayList<>();
         mos.add("10002");
@@ -67,7 +67,7 @@ public class QueryControllerTest {
                 });
     }
 
-    //@Test
+    @Test
     public void queryMin() throws Exception {
         List<String> mos = new ArrayList<>();
         mos.add("10002");
@@ -114,7 +114,7 @@ public class QueryControllerTest {
                 });
     }
 
-    //@Test
+    @Test
     public void queryMax() throws Exception {
         List<String> mos = new ArrayList<>();
         mos.add("10001");
