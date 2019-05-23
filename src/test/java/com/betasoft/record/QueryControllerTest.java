@@ -78,7 +78,7 @@ public class QueryControllerTest {
         QueryBuilder queryBuilder = new QueryBuilder();
 
         Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
-        Date endDate = sdf.parse(" 2019-05-21 23:13:59");
+        Date endDate = sdf.parse(" 2019-05-24 23:13:59");
         queryBuilder.setBeginDate(beginDate.getTime());
         queryBuilder.setEndDate(endDate.getTime());
 
@@ -86,7 +86,7 @@ public class QueryControllerTest {
         queryMetric.setName("OSCPU_CPU_LOAD");
 
         Map<String, Set<String>> tags = new HashMap<>();
-        tags.put("moc", new HashSet<>(Arrays.asList("NetworkDevice")));
+        tags.put("moc", new HashSet<>(Arrays.asList("Windows")));
         tags.put("mo", new HashSet<>(mos));
         queryMetric.setTags(tags);
 
@@ -125,7 +125,7 @@ public class QueryControllerTest {
         QueryBuilder queryBuilder = new QueryBuilder();
 
         Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
-        Date endDate = sdf.parse(" 2019-05-21 23:13:59");
+        Date endDate = sdf.parse(" 2019-05-24 23:13:59");
         queryBuilder.setBeginDate(beginDate.getTime());
         queryBuilder.setEndDate(endDate.getTime());
 
