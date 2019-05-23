@@ -41,7 +41,7 @@ public class MoControllerTest {
                 });
     }
 
-    @Test
+    //@Test
     public void testFindMoTypeByMetric() {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU_CPU_LOAD");
@@ -63,7 +63,7 @@ public class MoControllerTest {
                 });
     }
 
-    //@Test
+    @Test
     public void testFindMoByMetricAndMoType() {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU_CPU_LOAD");
