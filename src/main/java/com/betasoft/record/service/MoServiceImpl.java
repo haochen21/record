@@ -74,17 +74,13 @@ public class MoServiceImpl implements MoService {
                     mo.setMoKey(moKey);
                     for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
                         if (!entry.getKey().equals("mo") &&
-                                !entry.getKey().equals("category")) {
+                                !entry.getKey().equals("moc")) {
                             mo.getTags().put(entry.getKey(), entry.getValue());
                         }
                     }
-                    moMap.computeIfAbsent(metricName, key -> {
-                        ConcurrentHashMap<String, List<Mo>> tempMap = new ConcurrentHashMap<>();
-                        tempMap.put(category, new ArrayList<>());
-                        return tempMap;
-                    });
-                    moMap.get(metricName).computeIfAbsent(category, key -> new ArrayList<>());
-                    moMap.get(metricName).get(category).add(mo);
+                    moMap.computeIfAbsent(metricName, key -> new ConcurrentHashMap<>())
+                            .computeIfAbsent(category, key -> new ArrayList<>())
+                            .add(mo);
                     return Mono.just(mo);
                 }))
                 .zipWhen(mo -> moRepository.save(mo))
@@ -102,13 +98,9 @@ public class MoServiceImpl implements MoService {
 
     @Override
     public Mono<List<String>> findMoTypeByMetric(Mono<Map> metricMono) {
-        return metricMono.zipWhen(metricMap -> Flux.fromStream(moMap.entrySet().stream())
-                .filter(entry -> entry.getKey().equals(metricMap.get("metric").toString()))
-                .map(entry -> entry.getValue())
-                .map(moTypeMap -> moTypeMap.keySet())
-                .flatMap(moTypeEntry ->
-                        Flux.fromStream(moTypeEntry.stream()).map(moType -> moType))
-                .collectList())
+        return metricMono.zipWhen(metricMap ->
+                Flux.fromArray(moMap.get(metricMap.get("metric").toString()).keySet().toArray(new String[0]))
+                        .collectList())
                 .map(tuple2 -> tuple2.getT2());
     }
 
@@ -119,6 +111,5 @@ public class MoServiceImpl implements MoService {
                         .map(mo -> mo.getMoKey().getMoId())
                         .collectList())
                 .map(tuple2 -> tuple2.getT2());
-
     }
 }
