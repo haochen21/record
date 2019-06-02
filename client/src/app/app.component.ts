@@ -9,6 +9,8 @@ import { QueryBuilder } from './QueryBuilder';
 import { Metric } from './Metric';
 import { Aggregator } from './Aggregator';
 import { GroupBy } from './GroupBy';
+import { Tag } from './Tag';
+import { TagValue } from './TagValue';
 
 declare var require: any;
 const Highcharts = require('highcharts');
@@ -33,13 +35,11 @@ export class AppComponent {
 
   metrics = [];
 
-  mocValue: string;
+  tagKeys = [];
 
-  mocs = [];
-
-  mosValue = [];
-
-  mos = [];
+  tagValues: { [tagKey: string]: string[] } = { };
+  
+  tags: Tag[] = [];
 
   selectedAggregatorValue = '';
 
@@ -51,11 +51,15 @@ export class AppComponent {
     private http: HttpClient) {
     this.i18n.setLocale(zh_CN);
     Highcharts.setOptions({ global: { useUTC: false } });
-  } 
+
+    this.tags.push(new Tag("", ""));
+  }
 
   onMetricSerach(value: string): void {
     let url = "/api/v1/metric";
     let body = {};
+    this.tagValues = {};
+    this.tags = [];
     body["metric"] = value;
     this.http
       .post(url, body, {})
@@ -65,30 +69,42 @@ export class AppComponent {
   }
 
   metricChange(value: string): void {
-    this.mocs = [];
-    this.mocValue = null;
-    let url = "/api/v1/metric/moType";
+    this.tagKeys = [];
+    let url = "/api/v1/metric/tagKey";
     let body = {};
     body["metric"] = value;
     this.http
       .post(url, body, {})
       .subscribe((data: any) => {
-        this.mocs = data;
+        this.tagKeys = data;
       });
   }
 
-  mocChange(value: string): void {
-    this.mos = [];
-    this.mosValue = [];
-    let url = "/api/v1/metric/moId";
+  tagKeyChange(index: number, value: string): void {    
+    this.tags[index] = new Tag(value, "");
+    let url = "/api/v1/metric/tagValue";
     let body = {};
     body["metric"] = this.metricValue;
-    body["moType"] = value;
+    body["tagKey"] = value;
     this.http
       .post(url, body, {})
       .subscribe((data: any) => {
-        this.mos = data;
+        this.tagValues[value] = data;
       });
+  }
+
+  addTag(e?: MouseEvent): void {
+    if (e) {
+      e.preventDefault();
+    }
+    this.tags.push(new Tag("", ""));
+  }
+
+  deleteTag(index: number, e: MouseEvent): void {
+    if (e) {
+      e.preventDefault();
+    }
+    this.tags.splice(index, 1);
   }
 
   title = 'client';
@@ -110,8 +126,16 @@ export class AppComponent {
 
     let metric: Metric = new Metric();
     metric.name = this.metricValue;
-    metric.tags['moc'] = [this.mocValue];
-    metric.tags['mo'] = this.mosValue;
+
+    this.tags.forEach(function (tag) {
+      if (tag.key !== '' && tag.value !== '') {
+        if (!metric.tags[tag.key]) {
+          metric.tags[tag.key] = [tag.value];
+        } else {
+          metric.tags[tag.key].push(tag.value);
+        }
+      }
+    });
 
     if (this.selectedAggregatorValue) {
       let aggregator: Aggregator = new Aggregator();
@@ -135,11 +159,8 @@ export class AppComponent {
           let serie: object = {};
 
           let result = results[i];
-          let tags = result.tags;
-          let mos = tags.mo;
-          let mo = mos[0];
 
-          serie["name"] = mo;
+          serie["name"] = JSON.stringify(result.tags);;
           serie["data"] = [];
           let values = result.values;
           values.forEach(element => {

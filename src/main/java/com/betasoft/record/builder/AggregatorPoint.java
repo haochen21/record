@@ -1,21 +1,19 @@
 package com.betasoft.record.builder;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@RequiredArgsConstructor
 public class AggregatorPoint {
 
     private String metric;
 
-    private String moType;
-
-    private String moId;
+    private String tagJson;
 
     private String day;
 
+    @NonNull
     private double value;
 }

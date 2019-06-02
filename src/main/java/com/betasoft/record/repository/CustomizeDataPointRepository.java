@@ -10,11 +10,11 @@ import java.util.List;
 
 public interface CustomizeDataPointRepository {
 
-    Mono<List<AggregatorPoint>> avg(String metric, String moType, List<String> moIds, Date beginDate, Date endDate);
+    Mono<List<AggregatorPoint>> avg(String metric, List<String> tagJsons, Date beginDate, Date endDate);
 
-    Mono<List<AggregatorPoint>> max(String metric, String moType, List<String> moIds, Date beginDate, Date endDate);
+    Mono<List<AggregatorPoint>> max(String metric, List<String> tagJsons, Date beginDate, Date endDate);
 
-    Mono<List<AggregatorPoint>> min(String metric, String moType, List<String> moIds, Date beginDate, Date endDate);
+    Mono<List<AggregatorPoint>> min(String metric, List<String> tagJsons, Date beginDate, Date endDate);
 
-    Flux<DataPoint> findSamplePoints(String metric, String moType, List<String> moIds, Date beginDate, Date endDate);
+    Flux<DataPoint> findSamplePoints(String metric, List<String> tagJsons, Date beginDate, Date endDate);
 }

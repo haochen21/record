@@ -1,6 +1,6 @@
 package com.betasoft.record.web;
 
-import com.betasoft.record.service.MoService;
+import com.betasoft.record.service.TagService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,19 +10,17 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Component
 public class MoHander {
 
-    private MoService moService;
+    private TagService moService;
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Autowired
-    public MoHander(MoService moService) {
+    public MoHander(TagService moService) {
         this.moService = moService;
     }
 
@@ -39,9 +37,9 @@ public class MoHander {
                 );
     }
 
-    public Mono<ServerResponse> findMoTypeByMetric(ServerRequest serverRequest) {
+    public Mono<ServerResponse> findTagKeyByMetric(ServerRequest serverRequest) {
         Mono<Map> queryMap = serverRequest.bodyToMono(Map.class);
-        return moService.findMoTypeByMetric(queryMap)
+        return moService.findTagKeyByMetric(queryMap)
                 .flatMap(this::write)
                 .flatMap(json -> ServerResponse.ok()
                         .body(Mono.just(json), String.class)
@@ -52,9 +50,9 @@ public class MoHander {
                 );
     }
 
-    public Mono<ServerResponse> findMoByMetricAndMoType(ServerRequest serverRequest) {
+    public Mono<ServerResponse> findTagValueByMetricAndTagKey(ServerRequest serverRequest) {
         Mono<Map> queryMap = serverRequest.bodyToMono(Map.class);
-        return moService.findMoByMetricAndMoType(queryMap)
+        return moService.findTagValueByMetricAndTagKey(queryMap)
                 .flatMap(this::write)
                 .flatMap(json -> ServerResponse.ok()
                         .body(Mono.just(json), String.class)

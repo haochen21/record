@@ -3,6 +3,9 @@ package com.betasoft.record.service;
 import com.betasoft.record.builder.Metric;
 import com.betasoft.record.model.*;
 import com.betasoft.record.repository.DataPointRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -19,10 +22,12 @@ public class MetricServiceImpl implements MetricService {
     DataPointRepository dataPointRepository;
 
     @Autowired
-    MoServiceImpl moServiceImpl;
+    TagServiceImpl tagServiceImpl;
 
     @Autowired
     Scheduler scheduler;
+
+    private static final Logger logger = LoggerFactory.getLogger(MetricServiceImpl.class);
 
     public MetricServiceImpl() {
 
@@ -34,14 +39,6 @@ public class MetricServiceImpl implements MetricService {
             if (metric.getTags() == null || metric.getTags().size() == 0) {
                 return false;
             }
-            // 必需包含moc属性
-            if (!metric.getTags().containsKey("moc")) {
-                return false;
-            }
-            // 必需包含mo属性
-            if (!metric.getTags().containsKey("mo")) {
-                return false;
-            }
             // 必需包含采集的时候以及值
             if (metric.getSamplePoints() == null || metric.getSamplePoints().size() == 0) {
                 return false;
@@ -50,7 +47,7 @@ public class MetricServiceImpl implements MetricService {
         });
 
         return filterMetricFlux
-                .flatMap(metric -> moServiceImpl.saveMo(metric).map(metric1 -> metric1))
+                .flatMap(metric -> tagServiceImpl.saveMetricTag(metric).map(metric1 -> metric1))
                 .flatMap(this::getDataPoint)
                 .flatMap(dataPointWrapper ->
                         dataPointRepository.insert(dataPointWrapper.getDataPoint(), dataPointWrapper.getTtl()))
@@ -60,27 +57,30 @@ public class MetricServiceImpl implements MetricService {
 
 
     private Flux<DataPointWrapper> getDataPoint(Metric metric) {
-        String metricName = metric.getName();
-        String moType = metric.getTags().get("moc");
-        String moPath = metric.getTags().get("mo");
-        int ttl = metric.getTtl();
+        try {
+            String metricName = metric.getName();
+            int ttl = metric.getTtl();
+            Map<String, String> sortedTag = new TreeMap<>();
+            sortedTag.putAll(metric.getTags());
+            ObjectMapper mapper = new ObjectMapper();
+            String tagJson = mapper.writeValueAsString(sortedTag);
 
-        return Flux.fromIterable(metric.getSamplePoints())
-                .map(samplePoint -> {
-                    Date eventTime = new Date((Long) samplePoint[0]);
-                    Double value = Double.parseDouble(samplePoint[1].toString());
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return Flux.fromIterable(metric.getSamplePoints())
+                    .map(samplePoint -> {
+                        Date eventTime = new Date((Long) samplePoint[0]);
+                        Double value = Double.parseDouble(samplePoint[1].toString());
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-                    DataPointKey dataPointKey = new DataPointKey(metricName, moType, moPath, sdf.format(eventTime), eventTime);
-                    metric.getTags().remove("moc");
-                    metric.getTags().remove("mo");
-                    DataPoint dataPoint = new DataPoint(dataPointKey, value, metric.getTags());
-                    dataPoint.setDataPointKey(dataPointKey);
+                        DataPointKey dataPointKey = new DataPointKey(metricName, tagJson, sdf.format(eventTime), eventTime);
+                        DataPoint dataPoint = new DataPoint(dataPointKey, value);
+                        dataPoint.setDataPointKey(dataPointKey);
 
-                    DataPointWrapper dataPointWrapper = new DataPointWrapper(dataPoint, ttl, metricName, moType, moPath);
-                    return dataPointWrapper;
-                }).subscribeOn(scheduler);
+                        DataPointWrapper dataPointWrapper = new DataPointWrapper(dataPoint, ttl, metricName, tagJson);
+                        return dataPointWrapper;
+                    }).subscribeOn(scheduler);
+        } catch (Exception ex) {
+            logger.error("", ex);
+            return Flux.empty();
+        }
     }
-
-
 }

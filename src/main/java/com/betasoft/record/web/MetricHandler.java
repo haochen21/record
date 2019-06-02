@@ -1,7 +1,6 @@
 package com.betasoft.record.web;
 
 import com.betasoft.record.builder.Metric;
-import com.betasoft.record.model.DataPoint;
 import com.betasoft.record.service.MetricService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

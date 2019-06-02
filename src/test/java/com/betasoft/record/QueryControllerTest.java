@@ -34,8 +34,8 @@ public class QueryControllerTest {
 
         QueryBuilder queryBuilder = new QueryBuilder();
 
-        Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
-        Date endDate = sdf.parse(" 2019-05-21 19:13:59");
+        Date beginDate = sdf.parse(" 2019-6-01 16:14:59");
+        Date endDate = sdf.parse(" 2019-06-02 19:13:59");
         queryBuilder.setBeginDate(beginDate.getTime());
         queryBuilder.setEndDate(endDate.getTime());
 
@@ -77,8 +77,8 @@ public class QueryControllerTest {
 
         QueryBuilder queryBuilder = new QueryBuilder();
 
-        Date beginDate = sdf.parse(" 2019-05-19 16:14:59");
-        Date endDate = sdf.parse(" 2019-05-24 23:13:59");
+        Date beginDate = sdf.parse(" 2019-06-01 16:14:59");
+        Date endDate = sdf.parse(" 2019-06-02 23:13:59");
         queryBuilder.setBeginDate(beginDate.getTime());
         queryBuilder.setEndDate(endDate.getTime());
 

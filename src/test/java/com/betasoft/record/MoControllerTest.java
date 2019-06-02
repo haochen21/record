@@ -19,10 +19,10 @@ public class MoControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    //@Test
+    @Test
     public void testFilterMetric() {
         Map<String,String> map = new HashMap<>();
-        map.put("metric","OSCPU");
+        map.put("metric","CPU");
         webTestClient.post()
                 .uri("/api/v1/metric")
                 .body(Mono.just(map), Map.class)
@@ -46,7 +46,7 @@ public class MoControllerTest {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU_CPU_LOAD");
         webTestClient.post()
-                .uri("/api/v1/metric/moType")
+                .uri("/api/v1/metric/tagKey")
                 .body(Mono.just(map), Map.class)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -67,9 +67,9 @@ public class MoControllerTest {
     public void testFindMoByMetricAndMoType() {
         Map<String,String> map = new HashMap<>();
         map.put("metric","OSCPU_CPU_LOAD");
-        map.put("moType","Windows");
+        map.put("tagKey","mo");
         webTestClient.post()
-                .uri("/api/v1/metric/moId")
+                .uri("/api/v1/metric/tagValue")
                 .body(Mono.just(map), Map.class)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()

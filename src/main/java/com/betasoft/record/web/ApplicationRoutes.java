@@ -20,8 +20,8 @@ public class ApplicationRoutes {
                 .route(POST("/api/v1/datapoints").and(accept(APPLICATION_JSON)), metricHandler::save)
                 .andRoute(POST("/api/v1/datapoints/query").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), queryHandler::query)
                 .andRoute(POST("/api/v1/metric").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), moHander::filterMetric)
-                .andRoute(POST("/api/v1/metric/moType").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), moHander::findMoTypeByMetric)
-                .andRoute(POST("/api/v1/metric/moId").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), moHander::findMoByMetricAndMoType);
+                .andRoute(POST("/api/v1/metric/tagKey").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), moHander::findTagKeyByMetric)
+                .andRoute(POST("/api/v1/metric/tagValue").and(accept(APPLICATION_JSON)).and(contentType(APPLICATION_JSON)), moHander::findTagValueByMetricAndTagKey);
 
     }
 }

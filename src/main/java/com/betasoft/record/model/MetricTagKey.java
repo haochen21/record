@@ -7,6 +7,7 @@ import org.springframework.data.cassandra.core.mapping.PrimaryKeyClass;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -14,14 +15,12 @@ import java.io.Serializable;
 @ToString
 @AllArgsConstructor
 @PrimaryKeyClass
-public class MoKey implements Serializable {
+public class MetricTagKey implements Serializable {
 
     @PrimaryKeyColumn(name = "metric", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String metric;
 
-    @PrimaryKeyColumn(name = "mo_type", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-    private String moType;
+    @PrimaryKeyColumn(name = "tag_key", ordinal = 1, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+    private String tagKey;
 
-    @PrimaryKeyColumn(name = "mo_id", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
-    private String moId;
 }

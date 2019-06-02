@@ -1,6 +1,7 @@
 package com.betasoft.record.repository;
 
 import com.betasoft.record.builder.AggregatorPoint;
+import com.betasoft.record.builder.AggregatorPointWrapper;
 import com.betasoft.record.model.DataPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,29 +21,28 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomizeDataPointRepositoryImpl.class);
 
     @Override
-    public Mono<List<AggregatorPoint>> avg(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+    public Mono<List<AggregatorPoint>> avg(String metric, List<String> tagJsons, Date beginDate, Date endDate) {
         List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
         return Flux.fromIterable(queryDates)
-                .flatMap(queryDate -> Flux.fromIterable(moIds)
-                        .map(moId -> {
+                .flatMap(queryDate -> Flux.fromIterable(tagJsons)
+                        .map(tagJson -> {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
                             SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             StringBuilder sql = new StringBuilder();
-                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, avg(value) as value FROM data_point where metric ='").append(metric).append("' ");
-                            sql.append("and mo_type = '").append(moType).append("' ");
-                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("SELECT metric, tag_json as tagJson, day, avg(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and tag_json = '").append(tagJson).append("' ");
                             sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
-                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            sql.append("group by metric,tag_json,day"); //不返回空值
                             return sql.toString();
                         }))
                 //.log()
                 .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
                 //.log()
-                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
+                .collectMultimap(ap -> ap.getMetric() + "." + ap.getTagJson())
                 //.log()
                 .map(agMap -> {
                     List<AggregatorPoint> minAgs = new ArrayList<>();
@@ -57,92 +57,94 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
     }
 
     @Override
-    public Mono<List<AggregatorPoint>> max(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+    public Mono<List<AggregatorPoint>> max(String metric, List<String> tagJsons, Date beginDate, Date endDate) {
         List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
         return Flux.fromIterable(queryDates)
-                .flatMap(queryDate -> Flux.fromIterable(moIds)
-                        .map(moId -> {
+                .flatMap(queryDate -> Flux.fromIterable(tagJsons)
+                        .map(tagJson -> {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
                             SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             StringBuilder sql = new StringBuilder();
-                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, max(value) as value FROM data_point where metric ='").append(metric).append("' ");
-                            sql.append("and mo_type = '").append(moType).append("' ");
-                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("SELECT metric, tag_json as tagJson, day, max(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and tag_json = '").append(tagJson).append("' ");
                             sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
-                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            sql.append("group by metric,tag_json,day"); //不返回空值
                             return sql.toString();
                         }))
-                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
-                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
-                .map(agMap -> {
-                    List<AggregatorPoint> minAgs = new ArrayList<>();
-                    agMap.forEach((key, value) -> {
-                        AggregatorPoint firstAg = value.iterator().next();
-                        double max = value.stream().mapToDouble(AggregatorPoint::getValue).max().getAsDouble();
-                        firstAg.setValue(max);
-                        minAgs.add(firstAg);
-                    });
-                    return minAgs;
-                });
+                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPointWrapper.class))
+                .groupBy(apWrapper -> apWrapper.getAggregatorPointKey())
+                .flatMap(groupFlux -> groupFlux.reduce(new AggregatorPoint(Double.MIN_VALUE), (a, b) -> {
+                            AggregatorPoint maxAg = new AggregatorPoint();
+                            maxAg.setMetric(groupFlux.key().getMetric());
+                            maxAg.setTagJson(groupFlux.key().getTagJson());
+                            if (a.getValue() > b.getValue()) {
+                                maxAg.setValue(a.getValue());
+                            } else {
+                                maxAg.setValue(b.getValue());
+                            }
+                            return maxAg;
+                        })
+                ).collectList();
     }
 
     @Override
-    public Mono<List<AggregatorPoint>> min(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+    public Mono<List<AggregatorPoint>> min(String metric, List<String> tagJsons, Date beginDate, Date endDate) {
         List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
         return Flux.fromIterable(queryDates)
-                .flatMap(queryDate -> Flux.fromIterable(moIds)
-                        .map(moId -> {
+                .flatMap(queryDate -> Flux.fromIterable(tagJsons)
+                        .map(tagJson -> {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
                             SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             StringBuilder sql = new StringBuilder();
-                            sql.append("SELECT metric, mo_type as moType, mo_id as moId, day, min(value) as value FROM data_point where metric ='").append(metric).append("' ");
-                            sql.append("and mo_type = '").append(moType).append("' ");
-                            sql.append("and mo_id = '").append(moId).append("' ");
+                            sql.append("SELECT metric, tag_json as tagJson, day, min(value) as value FROM data_point where metric ='").append(metric).append("' ");
+                            sql.append("and tag_json = '").append(tagJson).append("' ");
                             sql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
                             sql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
-                            sql.append("group by metric,mo_type,mo_id,day"); //不返回空值
+                            sql.append("group by metric,tag_json,day"); //不返回空值
                             return sql.toString();
                         }))
-                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPoint.class))
-                .collectMultimap(ap -> ap.getMetric() + "." + ap.getMoType() + "." + ap.getMoId())
-                .map(agMap -> {
-                    List<AggregatorPoint> minAgs = new ArrayList<>();
-                    agMap.forEach((key, value) -> {
-                        AggregatorPoint firstAg = value.iterator().next();
-                        double min = value.stream().mapToDouble(AggregatorPoint::getValue).min().getAsDouble();
-                        firstAg.setValue(min);
-                        minAgs.add(firstAg);
-                    });
-                    return minAgs;
-                });
+                .flatMap(sql -> reactiveCassandraOperations.select(sql, AggregatorPointWrapper.class))
+                .groupBy(apWrapper -> apWrapper.getAggregatorPointKey())
+                .flatMap(groupFlux -> groupFlux.reduce(new AggregatorPoint(Double.MAX_VALUE), (a, b) -> {
+                            AggregatorPoint minAg = new AggregatorPoint();
+                            minAg.setMetric(groupFlux.key().getMetric());
+                            minAg.setTagJson(groupFlux.key().getTagJson());
+                            if (a.getValue() <= b.getValue()) {
+                                minAg.setValue(a.getValue());
+                            } else {
+                                minAg.setValue(b.getValue());
+                            }
+                            return minAg;
+                        })
+                ).collectList();
     }
 
     @Override
-    public Flux<DataPoint> findSamplePoints(String metric, String moType, List<String> moIds, Date beginDate, Date endDate) {
+    public Flux<DataPoint> findSamplePoints(String metric, List<String> tagJsons, Date beginDate, Date endDate) {
         List<Date[]> queryDates = getQueryDates(beginDate, endDate);
 
         return Flux.fromIterable(queryDates)
-                .flatMap(queryDate -> Flux.fromIterable(moIds)
-                        .map(moId -> {
+                .flatMap(queryDate -> Flux.fromIterable(tagJsons)
+                        .map(tagJson -> {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
                             SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             StringBuilder findSql = new StringBuilder();
                             findSql.append("SELECT * FROM data_point where metric ='").append(metric).append("' ");
-                            findSql.append("and mo_type = '").append(moType).append("' ");
-                            findSql.append("and mo_id = '").append(moId).append("' ");
+                            findSql.append("and tag_json = '").append(tagJson).append("' ");
                             findSql.append("and day = '").append(daySdf.format(queryDate[0])).append("' ");
                             findSql.append("and event_time >='").append(sdf.format(queryDate[0])).append("' ");
                             findSql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
                             return findSql.toString();
                         }))
+                .log()
                 .flatMap(findSql -> reactiveCassandraOperations.select(findSql, DataPoint.class));
 
     }

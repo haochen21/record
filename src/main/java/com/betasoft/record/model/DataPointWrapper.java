@@ -15,7 +15,5 @@ public class DataPointWrapper {
 
     private String metricName;
 
-    private String category;
-
-    private String moPath;
+    private String tagJson;
 }

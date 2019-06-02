@@ -50,12 +50,11 @@ public class MetricControllerTest {
         tags.put("moc", moType);
 
         tags.put("mo", moId);
-        tags.put("info", "" + random.nextInt(100000));
         metric.setTags(tags);
 
         List<Object[]> samplePoints = new ArrayList<>();
         metric.setSamplePoints(samplePoints);
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
             Calendar sampleCalendar = (Calendar) nowCalendar.clone();
             sampleCalendar.add(Calendar.MINUTE, i * 5);
             samplePoints.add(new Object[]{sampleCalendar.getTime().getTime(), random.nextDouble()});

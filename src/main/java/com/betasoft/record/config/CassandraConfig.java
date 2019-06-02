@@ -1,12 +1,16 @@
 package com.betasoft.record.config;
 
+import com.betasoft.record.builder.AggregatorPointWrapperReadConverter;
 import com.betasoft.record.repository.ExtendedReactiveCassandraRepositoryImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
+import org.springframework.data.cassandra.core.convert.CassandraCustomConversions;
 import org.springframework.data.cassandra.repository.config.EnableReactiveCassandraRepositories;
+import org.springframework.data.convert.CustomConversions;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -31,13 +35,11 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
         String dataPointTable = "" +
                 "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".data_point (\n" +
                 "  metric text,\n" +
-                "  mo_type text,\n" +
-                "  mo_id text,\n" +
+                "  tag_json text,\n" +
                 "  day text,\n" +
                 "  event_time timestamp,\n" +
                 "  value double,\n" +
-                "  tags map<text, text>,\n" +
-                "  PRIMARY KEY ((metric, mo_type, mo_id, day), event_time)\n" +
+                "  PRIMARY KEY ((metric, tag_json, day), event_time)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 31536000\n" +
@@ -47,13 +49,12 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 " 'class': 'org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy'" +
                 "};";
 
-        String metricTable = "" +
-                "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".mo (\n" +
+        String tagsTable = "" +
+                "CREATE TABLE IF NOT EXISTS " + getKeyspaceName() + ".metric_tag (\n" +
                 "  metric text,\n" +
-                "  mo_type text,\n" +
-                "  mo_id text,\n" +
-                "  tags map<text, text>,\n" +
-                "  PRIMARY KEY ((metric, mo_type),mo_id)\n" +
+                "  tag_key text,\n" +
+                "  tag_values set<text>,\n" +
+                "  PRIMARY KEY (metric, tag_key)\n" +
                 ")\n" +
                 " WITH gc_grace_seconds = 60\n" +
                 " AND default_time_to_live = 31536000\n" +
@@ -63,9 +64,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
                 " 'class': 'org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy'" +
                 "};";
 
-        String moTagsInx = "CREATE INDEX IF NOT EXISTS mo_tags_idx ON " + getKeyspaceName() + ".mo (ENTRIES(tags))";
-
-        return Arrays.asList(keyspace, dataPointTable, metricTable, moTagsInx);
+        return Arrays.asList(keyspace, dataPointTable, tagsTable);
     }
 
     @Override
@@ -86,5 +85,10 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     @Override
     protected boolean getMetricsEnabled() {
         return false;
+    }
+
+    @Override
+    public CustomConversions customConversions() {
+        return new CassandraCustomConversions(Arrays.asList(new AggregatorPointWrapperReadConverter()));
     }
 }
