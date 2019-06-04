@@ -12,9 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.*;
 
 @RunWith(SpringRunner.class)
@@ -49,22 +52,34 @@ public class QueryControllerTest {
 
         queryBuilder.setMetrics(Arrays.asList(queryMetric));
 
-        webTestClient.post()
-                .uri("/api/v1/datapoints/query")
-                .body(Mono.just(queryBuilder), QueryBuilder.class)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Queries.class)
-                .consumeWith(entityExchangeResult -> {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    try{
-                        String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
-                        System.out.println(result);
-                    }catch(Exception ex){
-                        ex.printStackTrace();
-                    }
-                });
+        new Thread(() -> {
+            while(true){
+                webTestClient.post()
+                        .uri("/api/v1/datapoints/query")
+                        .body(Mono.just(queryBuilder), QueryBuilder.class)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isOk()
+                        .expectBody(Queries.class)
+                        .consumeWith(entityExchangeResult -> {
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            try {
+                                String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
+                                //System.out.println(result);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        });
+                try {
+                    Thread.sleep(3000);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }).start();
+
+
+        Thread.sleep(30 * 60 * 1000);
     }
 
     @Test
@@ -105,10 +120,10 @@ public class QueryControllerTest {
                 .expectBody(Queries.class)
                 .consumeWith(entityExchangeResult -> {
                     ObjectMapper objectMapper = new ObjectMapper();
-                    try{
+                    try {
                         String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
                         System.out.println(result);
-                    }catch(Exception ex){
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 });
@@ -152,10 +167,10 @@ public class QueryControllerTest {
                 .expectBody(Queries.class)
                 .consumeWith(entityExchangeResult -> {
                     ObjectMapper objectMapper = new ObjectMapper();
-                    try{
+                    try {
                         String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
                         System.out.println(result);
-                    }catch(Exception ex){
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 });
@@ -199,10 +214,10 @@ public class QueryControllerTest {
                 .expectBody(Queries.class)
                 .consumeWith(entityExchangeResult -> {
                     ObjectMapper objectMapper = new ObjectMapper();
-                    try{
+                    try {
                         String result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entityExchangeResult.getResponseBody());
                         System.out.println(result);
-                    }catch(Exception ex){
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 });

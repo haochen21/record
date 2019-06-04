@@ -35,7 +35,7 @@ public class MonitorServiceImpl implements MonitorService {
         executor = new ScheduledThreadPoolExecutor(2, threadFactory);
 
         executor.scheduleAtFixedRate(() -> monitor(),
-                2000, 1 * 60 * 1000, TimeUnit.MILLISECONDS);
+                2000, 5 * 60 * 1000, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -57,9 +57,6 @@ public class MonitorServiceImpl implements MonitorService {
             value = value / 1024 / 1024;
             Metric metric = createMetric("jvm.memory.used", new Double(decimalFormat.format(value)));
             metrics.add(metric);
-
-
-            System.out.println(key.toString() + "," + decimalFormat.format(value));
         });
     }
 
@@ -72,7 +69,6 @@ public class MonitorServiceImpl implements MonitorService {
                 value = value * 100;
                 Metric metric = createMetric("system.cpu.usage", new Double(decimalFormat.format(value)));
                 metrics.add(metric);
-                System.out.println("jvm.memory.used," + decimalFormat.format(value));
             }
         });
     }
@@ -86,7 +82,6 @@ public class MonitorServiceImpl implements MonitorService {
                 value = value * 100;
                 Metric metric = createMetric("process.cpu.usage", new Double(decimalFormat.format(value)));
                 metrics.add(metric);
-                System.out.println("process.cpu.usage," + decimalFormat.format(value));
             }
         });
     }

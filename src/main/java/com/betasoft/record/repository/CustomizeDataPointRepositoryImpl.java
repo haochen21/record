@@ -144,7 +144,6 @@ public class CustomizeDataPointRepositoryImpl implements CustomizeDataPointRepos
                             findSql.append("and event_time <='").append(sdf.format(queryDate[1])).append("'");
                             return findSql.toString();
                         }))
-                .log()
                 .flatMap(findSql -> reactiveCassandraOperations.select(findSql, DataPoint.class));
 
     }

@@ -2,8 +2,8 @@ package com.betasoft.record.web;
 
 import com.betasoft.record.builder.Queries;
 import com.betasoft.record.builder.QueryBuilder;
+import com.betasoft.record.monitor.ReadWriterMonitor;
 import com.betasoft.record.service.DataPointService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -15,9 +15,11 @@ public class QueryHandler {
 
     private DataPointService dataPointService;
 
-    @Autowired
-    public QueryHandler(DataPointService dataPointService) {
+    private ReadWriterMonitor readWriterMonitor;
+
+    public QueryHandler(DataPointService dataPointService,ReadWriterMonitor readWriterMonitor) {
         this.dataPointService = dataPointService;
+        this.readWriterMonitor = readWriterMonitor;
     }
 
     public Mono<ServerResponse> query(ServerRequest serverRequest) {
@@ -26,6 +28,9 @@ public class QueryHandler {
 
         return queriesMono
                 .elapsed()
+                .doOnNext(tuple2 -> {
+                    readWriterMonitor.queryTime(tuple2.getT1());
+                })
                 .flatMap(tuple2 ->
                         ServerResponse.status(HttpStatus.OK)
                                 .header("executetime",tuple2.getT1().toString())
